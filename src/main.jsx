@@ -9,6 +9,8 @@ import App from './App.jsx'
 import Customers from './components/Customers.jsx';
 import Trainings from './components/Trainings.jsx';
 import Error from './components/Error.jsx';
+import Calendar from './components/Calendar.jsx';
+import Graph from './components/Graph.jsx';
 
 
 // router jutut
@@ -30,13 +32,15 @@ const router = createBrowserRouter([
       {
         path: "trainings",                // path can be defined relative to the parent path
         element: <Trainings />,
-      }
-      /*,   täöhän tulee kalenteri
-      {
-        path: "contact",
-        element: <Contact />,
       },
-      */
+      {
+        path: "calendar",
+        element: <Calendar />,
+      },
+      {
+        path: "graph",
+        element: <Graph />,
+      }
     ]
   },
 ]);

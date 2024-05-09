@@ -3,8 +3,8 @@ import { useState, useEffect } from "react";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-material.css";
-import { Button, Snackbar } from "@mui/material";
 import { SliderMarkLabel } from "@mui/material";
+import { Button, Snackbar, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 
 // date
 import dayjs from "dayjs";
@@ -21,9 +21,10 @@ export default function Trainings() {
       activity: '',
       customer: ''
     }]);
+    const [openSnackBar, setOpenSnackBar] = useState(false);
+    const [openConfirmationDialog, setOpenConfirmationDialog] = useState(false);
+    const [trainingToDelete, setTrainingToDelete] = useState(null);
 
-
-  const [openSnackBar, setOpenSnackBar] = useState(false);
 
   const [colDefs, setColDefs] = useState([
 
@@ -61,48 +62,25 @@ export default function Trainings() {
         }
       }
     },
-
-    /*
-    
-    
     {
-      headerName: 'Delete',
+      headerName: "Delete",
       cellRenderer: (params) => {
         return (
           <Button
-            size="small"
-            color="error"
+            onClick={() => deleteTraining(params)}
             variant="contained"
-            onClick={() => deleteCar(params)}
-          >Delete
+            color="error"
+          >
+            Delete
           </Button>
         )
       }
-    },
-    {
-      headerName: 'Edit',
-      cellRenderer: (params) => {
-        return (
-          //<Button
-          //  size="small"
-          //  color="info"
-          //  variant="contained"
-          //onClick={(row) => 
-          <EditCar updateCar={updateCar} car={params.data} />
-          //}
-          //>Edit
-          //</Button>
-        )
-      }
     }
-    */
   ])
 
 
-
-
   // haetaan treenit
-  useEffect(() => getTrainings, [])  //fetch once after first render
+  useEffect(() => getTrainings, [])  //käynnistyy ekan renderin jälkee
 
 
   const getTrainings = () => {
@@ -118,28 +96,31 @@ export default function Trainings() {
       .catch(error => console.error(error))
   }
 
+  // poisto ja vahvistus
+  const deleteTraining = (params) => {
+    const id = params.data.id;
+    setOpenConfirmationDialog(true);
+    setTrainingToDelete(params);
+  };
 
-  /*
-   const getTrainings = () => {
-       fetch("https://customerrestservice-personaltraining.rahtiapp.fi/api/trainings")
-         .then(response => response.json())
-         .then(data => {
-           console.log("Training data:", data);
-           setTrainings(data._embedded.trainings);
-         })
-         .catch(error => console.error(error));
-     };
-     
-     const fetchCustomerData = (customerLink) => {
-       return fetch(customerLink)
-         .then(response => response.json())
-         .then(customerData => customerData)
-         .catch(error => {
-           console.error("Error fetching customer data:", error);
-           return null;
-         });
-     };
-     */
+  const confirmDeleteTraining = () => {
+    const id = trainingToDelete.data.id;
+    fetch(
+      `https://customerrestservice-personaltraining.rahtiapp.fi/api/trainings/${id}`,
+      { method: "DELETE" }
+    )
+      .then((res) => {
+        if (res.ok) {
+          setOpenConfirmationDialog(false);
+          setOpenSnackBar(true);
+          getTrainings();
+        } else {
+          setOpenConfirmationDialog(false);
+          window.alert("Delete failed");
+        }
+      })
+      .catch((error) => console.log(error));
+  };
 
 
 
@@ -154,15 +135,23 @@ export default function Trainings() {
           paginationPageSize={10}
         ></AgGridReact>
       </div>
+
+      <Dialog open={openConfirmationDialog} onClose={() => setOpenConfirmationDialog(false)}>
+        <DialogTitle>Delete Confirmation</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this training?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenConfirmationDialog(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={confirmDeleteTraining} color="error">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   )
 }
-
-/*
-<Snackbar
-                open={openSnackBar}
-                autoHideDuration={3000}
-                onClose={handleCloseSnackBar}
-                message="Car deleted successfully"
-            />
-*/

@@ -3,13 +3,14 @@ import { useState, useEffect } from "react";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-material.css";
-import { Button, Snackbar } from "@mui/material";
 import { SliderMarkLabel } from "@mui/material";
+import { Button, Snackbar, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material"; // Combine Button and Snackbar import
 
 import EditCustomer from './EditCustomer';
 import AddCustomer from "./AddCustomer";
 import AddTraining from "./AddTraining";
 
+import { CSVLink } from 'react-csv';
 
 export default function Customers() {
 
@@ -26,9 +27,12 @@ export default function Customers() {
       email: '',
       phone: ''
     }]);
-
-
+  const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState(null);
   const [openSnackBar, setOpenSnackBar] = useState(false);
+
+
+
 
   // coldefs
   const [colDefs, setColDefs] = useState([
@@ -51,11 +55,7 @@ export default function Customers() {
       headerName: 'Add training',
       cellRenderer: (params) => {
         if (params.data._links) {
-          return (
-            <Button onClick={() => handleClick(params)}>
-              <AddTraining customerLink={params.data._links.customer.href} />
-            </Button>
-          );
+          return <AddTraining customerLink={params.data._links.customer.href} />;
         } else {
           return null;
         }
@@ -69,8 +69,9 @@ export default function Customers() {
             size="small"
             color="error"
             variant="contained"
-            onClick={() => deleteCustomer(params)}
-          >Delete
+            onClick={() => handleDeleteConfirmation(params)}
+          >
+            Delete
           </Button>
         )
       }
@@ -161,6 +162,41 @@ export default function Customers() {
   };
 
 
+  // poisto vahvistus jutut vvv
+  const handleDeleteConfirmation = (params) => {
+    setCustomerToDelete(params);
+    setOpenDeleteConfirmation(true);
+  };
+
+  const confirmDeleteCustomer = () => {
+    const customerId = customerToDelete.data.id;
+    fetch(customerToDelete.data._links.customer.href, { method: "DELETE" })
+      .then((res) => {
+        if (res.ok) {
+          setOpenDeleteConfirmation(false);
+          setOpenSnackBar(true);
+          getCustomers();
+        } else {
+          setOpenDeleteConfirmation(false);
+          window.alert("Delete failed");
+        }
+      })
+      .catch((error) => console.log(error));
+  };
+
+  const handleCloseDeleteConfirmation = () => {
+    setOpenDeleteConfirmation(false);
+  };
+
+  // CSV exporttiin tulee vain asiakkaan tiedot
+  const handleExportClick = () => {
+    const filteredCustomers = customers.map(customer => {
+      const { firstname, lastname, streetaddress, postcode, city, email, phone } = customer;
+      return { firstname, lastname, streetaddress, postcode, city, email, phone };
+    });
+    return filteredCustomers;
+  };
+
 
   return (
     <>
@@ -174,15 +210,30 @@ export default function Customers() {
       </div>
 
       <AddCustomer handleSave={handleSave}></AddCustomer>
+      <Button
+        variant="contained"
+        color="primary"
+        style={{ margintop: '5px', width: '300px' }}
+      >
+        <CSVLink data={handleExportClick()} filename={"customers.csv"}>Export to CSV</CSVLink>
+      </Button>
+
+      <Dialog open={openDeleteConfirmation} onClose={handleCloseDeleteConfirmation}>
+        <DialogTitle>Delete Confirmation</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this customer?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteConfirmation} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={confirmDeleteCustomer} color="error">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   )
 }
-
-/*
-<Snackbar
-                open={openSnackBar}
-                autoHideDuration={3000}
-                onClose={handleCloseSnackBar}
-                message="Car deleted successfully"
-            />
-*/

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://{bhd433}.github.io/{TrainingApp_frontend2024}/",
+  "homepage": "https://bhd433.github.io/TrainingApp_frontend2024",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
